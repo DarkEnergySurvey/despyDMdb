@@ -14,11 +14,34 @@ import time
 
 import despymisc.miscutils as miscutils
 
+MAXTRIES = 5
+TRYINTERVAL = 10
+
 
 class DBSemaphore(object):
-    """
-    Using the database, provide semaphore capability.
-    Currently requires Oracle
+    """ Using the database, provide semaphore capability.
+        Currently requires Oracle or the test infrastructure
+
+        Parameters
+        ----------
+        semname : str
+            The name of the semaphore to use
+
+        task_id : int
+            The id number of the tast requesting the semaphore lock
+
+        desfile : str, optional
+            The name of the services file to use. Default is None.
+
+        section : str, optional
+            The name of the section in the services file to use. Default is None.
+
+        connection : database handle, optional
+            The database handle to use for the operation. Default is None, it will
+            initiate it's own handle.
+
+        threaded : bool, False
+            Whether to make the created handle thread safe. Default is False.
     """
 
     def __init__(self, semname, task_id, desfile=None, section=None, connection=None, threaded=False):
@@ -61,8 +84,6 @@ class DBSemaphore(object):
         self.slot = curs.var(cx_Oracle.NUMBER)
         done = False
         trycnt = 1
-        MAXTRIES = 5
-        TRYINTERVAL = 10
         while not done and trycnt <= MAXTRIES:
             try:
                 miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - BEG - wait")
@@ -70,6 +91,8 @@ class DBSemaphore(object):
                 miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - END - wait")
                 miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - INFO - slot %s" % self.slot)
                 done = True
+                if not self.dbh.is_oracle():
+                    self.dbh.commit() # test database must commit
             except Exception as e:
                 miscutils.fwdebug(0, "SEMAPHORE_DEBUG", "SEM - ERROR - %s" % str(e))
 
