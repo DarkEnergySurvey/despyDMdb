@@ -126,7 +126,6 @@ port    =   0
 class TestDesdmdbi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        print 'SETUP'
         cls.sfile = 'services.ini'
         open(cls.sfile, 'w').write("""
 
@@ -319,6 +318,8 @@ port    =   0
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0], 'SE_OBJECT')
         self.assertTrue('PRIMARY' in data[1].keys())
+
+        self.assertRaises(ValueError, dbh.get_datafile_metadata, 'cat_something')
 
 if __name__ == '__main__':
     unittest.main()
