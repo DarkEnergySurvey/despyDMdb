@@ -18,7 +18,7 @@ MAXTRIES = 5
 TRYINTERVAL = 10
 
 
-class DBSemaphore(object):
+class DBSemaphore:
     """ Using the database, provide semaphore capability.
         Currently requires Oracle or the test infrastructure
 
@@ -54,7 +54,7 @@ class DBSemaphore(object):
         self.task_id = task_id
         self.slot = None
 
-        miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - INFO - semname %s" % self.semname)
+        miscutils.fwdebug(3, f"SEMAPHORE_DEBUG", "SEM - INFO - semname {self.semname}")
         miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - BEG - db-specific imports")
         import despydmdb.desdmdbi as desdmdbi
         import cx_Oracle
@@ -66,12 +66,12 @@ class DBSemaphore(object):
 
         curs = self.dbh.cursor()
 
-        sql = 'select count(*) from semlock where name=%s' % self.dbh.get_named_bind_string('name')
+        sql = f"select count(*) from semlock where name={self.dbh.get_named_bind_string('name')}"
         curs.execute(sql, {'name': semname})
         num_slots = curs.fetchone()[0]
         if num_slots == 0:
-            miscutils.fwdebug(0, "SEMAPHORE_DEBUG", "SEM - ERROR - no locks with name %s" % semname)
-            raise ValueError('No locks with name %s' % semname)
+            miscutils.fwdebug(0, "SEMAPHORE_DEBUG", f"SEM - ERROR - no locks with name {semname}")
+            raise ValueError(f'No locks with name {semname}')
 
         self.id = self.dbh.get_seq_next_value('seminfo_seq')
         self.dbh.basic_insert_row('seminfo', {'id': self.id,
@@ -89,12 +89,12 @@ class DBSemaphore(object):
                 miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - BEG - wait")
                 curs.callproc("SEM_WAIT", [self.semname, self.slot])
                 miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - END - wait")
-                miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - INFO - slot %s" % self.slot)
+                miscutils.fwdebug(3, "SEMAPHORE_DEBUG", f"SEM - INFO - slot {self.slot}")
                 done = True
                 if not self.dbh.is_oracle():
                     self.dbh.commit() # test database must commit
             except Exception as e:
-                miscutils.fwdebug(0, "SEMAPHORE_DEBUG", "SEM - ERROR - %s" % str(e))
+                miscutils.fwdebug(0, "SEMAPHORE_DEBUG", f"SEM - ERROR - {str(e)}")
 
                 time.sleep(TRYINTERVAL)
 
@@ -125,7 +125,7 @@ class DBSemaphore(object):
         """
         Do the semaphore signal and close DB connection
         """
-        if self.slot != None:
+        if self.slot is not None and str(self.slot) != 'None':
             try:
                 miscutils.fwdebug(3, "SEMAPHORE_DEBUG", "SEM - BEG - signal")
                 curs = self.dbh.cursor()
@@ -136,7 +136,7 @@ class DBSemaphore(object):
                                           {'id': self.id})
                 self.dbh.commit()
             except Exception as e:
-                miscutils.fwdebug(0, "SEMAPHORE_DEBUG", "SEM - ERROR - %s" % str(e))
+                miscutils.fwdebug(0, "SEMAPHORE_DEBUG", "SEM - ERROR - " + str(e))
 
         self.slot = None
         self.dbh.close()

@@ -10,7 +10,7 @@
 __version__ = "$Rev: 48543 $"
 
 import socket
-from collections import OrderedDict
+import collections
 
 import despydb.desdbi as desdbi
 import despydmdb.dmdb_defs as dmdbdefs
@@ -54,17 +54,17 @@ class DesDmDbi(desdbi.DesDbi):
         curs.execute(sql)
         desc = [d[0].lower() for d in curs.description]
 
-        result = OrderedDict()
+        result = collections.OrderedDict()
         for line in curs:
             d = dict(zip(desc, line))
             headername = d['file_header_name'].lower()
             columnname = d['column_name'].lower()
             if headername not in result:
-                result[headername] = OrderedDict()
+                result[headername] = collections.OrderedDict()
             if columnname not in result[headername]:
                 result[headername][columnname] = d
             else:
-                raise Exception("Found duplicate row in metadata(%s, %s)" %(headername, columnname))
+                raise Exception(f"Found duplicate row in metadata({headername}, {columnname})")
 
         curs.close()
         return result
@@ -93,28 +93,28 @@ class DesDmDbi(desdbi.DesDbi):
         curs.execute(sql)
         desc = [d[0].lower() for d in curs.description]
 
-        result = OrderedDict()
+        result = collections.OrderedDict()
         for row in curs:
             info = dict(zip(desc, row))
             ptr = result
             ftype = info['filetype'].lower()
             if ftype not in result:
-                result[ftype] = OrderedDict({'hdus': OrderedDict()})
+                result[ftype] = collections.OrderedDict({'hdus': collections.OrderedDict()})
                 if info['metadata_table'] is not None:
                     result[ftype]['metadata_table'] = info['metadata_table'].lower()
                 if info['filetype_mgmt'] is not None:
                     result[ftype]['filetype_mgmt'] = info['filetype_mgmt']
 
             if info['file_hdu'].lower() not in result[ftype]['hdus']:
-                result[ftype]['hdus'][info['file_hdu'].lower()] = OrderedDict()
+                result[ftype]['hdus'][info['file_hdu'].lower()] = collections.OrderedDict()
 
             ptr = result[ftype]['hdus'][info['file_hdu'].lower()]
             if info['status'].lower() not in ptr:
-                ptr[info['status'].lower()] = OrderedDict()
+                ptr[info['status'].lower()] = collections.OrderedDict()
 
             ptr = ptr[info['status'].lower()]
             if info['derived'].lower() not in ptr:
-                ptr[info['derived'].lower()] = OrderedDict()
+                ptr[info['derived'].lower()] = collections.OrderedDict()
 
             ptr[info['derived'].lower()][info['file_header_name'].lower()] = info['column_name'].lower()
 
@@ -169,25 +169,25 @@ class DesDmDbi(desdbi.DesDbi):
             dict
         """
 
-        archive_transfer = OrderedDict()
+        archive_transfer = collections.OrderedDict()
         sql = "select src,dst,transfer from ops_archive_transfer"
         curs = self.cursor()
         curs.execute(sql)
         for row in curs:
             if row[0] not in archive_transfer:
-                archive_transfer[row[0]] = OrderedDict()
-            archive_transfer[row[0]][row[1]] = OrderedDict({'transfer':row[2]})
+                archive_transfer[row[0]] = collections.OrderedDict()
+            archive_transfer[row[0]][row[1]] = collections.OrderedDict({'transfer':row[2]})
 
         sql = "select src,dst,key,val from ops_archive_transfer_val"
         curs = self.cursor()
         curs.execute(sql)
         for row in curs:
             if row[0] not in archive_transfer:
-                miscutils.fwdebug(0, 'DESDBI_DEBUG', "WARNING: found info in ops_archive_transfer_val for src archive %s which is not in ops_archive_transfer" % row[0])
-                archive_transfer[row[0]] = OrderedDict()
+                miscutils.fwdebug(0, 'DESDBI_DEBUG', f"WARNING: found info in ops_archive_transfer_val for src archive {row[0]} which is not in ops_archive_transfer")
+                archive_transfer[row[0]] = collections.OrderedDict()
             if row[1] not in archive_transfer[row[0]]:
-                miscutils.fwdebug(0, 'DESDBI_DEBUG', "WARNING: found info in ops_archive_transfer_val for dst archive %s which is not in ops_archive_transfer" % row[1])
-                archive_transfer[row[0]][row[1]] = OrderedDict()
+                miscutils.fwdebug(0, 'DESDBI_DEBUG', f"WARNING: found info in ops_archive_transfer_val for dst archive {row[1]} which is not in ops_archive_transfer")
+                archive_transfer[row[0]][row[1]] = collections.OrderedDict()
             archive_transfer[row[0]][row[1]][row[2]] = row[3]
         return archive_transfer
 
@@ -204,7 +204,7 @@ class DesDmDbi(desdbi.DesDbi):
         sql = "select site,home_archive,target_archive,mvmtclass from ops_job_file_mvmt"
         curs = self.cursor()
         curs.execute(sql)
-        info = OrderedDict()
+        info = collections.OrderedDict()
         for(site, home, target, mvmt) in curs:
             if home is None:
                 home = 'no_archive'
@@ -213,10 +213,10 @@ class DesDmDbi(desdbi.DesDbi):
                 target = 'no_archive'
 
             if site not in info:
-                info[site] = OrderedDict()
+                info[site] = collections.OrderedDict()
             if home not in info[site]:
-                info[site][home] = OrderedDict()
-            info[site][home][target] = OrderedDict({'mvmtclass': mvmt})
+                info[site][home] = collections.OrderedDict()
+            info[site][home][target] = collections.OrderedDict({'mvmtclass': mvmt})
 
         sql = "select site,home_archive,target_archive,key,val from ops_job_file_mvmt_val"
         curs = self.cursor()
@@ -231,7 +231,7 @@ class DesDmDbi(desdbi.DesDbi):
             if(site not in info or
                home not in info[site] or
                target not in info[site][home]):
-                miscutils.fwdie("Error: found info in ops_job_file_mvmt_val(%s, %s, %s, %s, %s) which is not in ops_job_file_mvmt" %(site, home, target, key, val), 1)
+                miscutils.fwdie(f"Error: found info in ops_job_file_mvmt_val({site}, {home}, {target}, {key}, {val}) which is not in ops_job_file_mvmt", 1)
             info[site][home][target][key] = val
         return info
 
@@ -262,7 +262,7 @@ class DesDmDbi(desdbi.DesDbi):
                   dmdbdefs.DB_COL_MD5SUM, dmdbdefs.DB_COL_FILESIZE]
         rows = []
         for _file in filelist:
-            miscutils.fwdebug(3, 'DESDBI_DEBUG', "file = %s" % _file)
+            miscutils.fwdebug(3, 'DESDBI_DEBUG', f"file = {_file}")
             fname = None
             comp = None
             md5sum = None
@@ -278,13 +278,13 @@ class DesDmDbi(desdbi.DesDbi):
                     (fname, comp) = miscutils.parse_fullname(_file[dmdbdefs.DB_COL_FILENAME], parsemask)
                 else:
                     (fname, comp) = miscutils.parse_fullname(_file[dmdbdefs.DB_COL_FILENAME.lower()], parsemask)
-                miscutils.fwdebug(3, 'DESDBI_DEBUG', "fname=%s, comp=%s"  %(fname, comp))
+                miscutils.fwdebug(3, 'DESDBI_DEBUG', f"fname={fname}, comp={comp}")
             elif 'fullname' in _file:
                 (fname, comp) = miscutils.parse_fullname(_file['fullname'], parsemask)
-                miscutils.fwdebug(3, 'DESDBI_DEBUG', "parse_fullname: fname=%s, comp=%s"  %(fname, comp))
+                miscutils.fwdebug(3, 'DESDBI_DEBUG', f"parse_fullname: fname={fname}, comp={comp}")
             else:
-                miscutils.fwdebug(3, 'DESDBI_DEBUG', "file=%s"  % _file)
-                raise ValueError("Invalid entry filelist(%s)" % _file)
+                miscutils.fwdebug(3, 'DESDBI_DEBUG', f"file={_file}")
+                raise ValueError(f"Invalid entry filelist({_file})")
 
             if dmdbdefs.DB_COL_FILESIZE in _file:
                 filesize = _file[dmdbdefs.DB_COL_FILESIZE]
@@ -296,7 +296,7 @@ class DesDmDbi(desdbi.DesDbi):
             elif dmdbdefs.DB_COL_MD5SUM.lower() in _file:
                 md5sum = _file[dmdbdefs.DB_COL_MD5SUM.lower()]
 
-            miscutils.fwdebug(3, 'DESDBI_DEBUG', "row: fname=%s, comp=%s, filesize=%s, md5sum=%s"  %(fname, comp, filesize, md5sum))
+            miscutils.fwdebug(3, 'DESDBI_DEBUG', f"row: fname={fname}, comp={comp}, filesize={filesize}, md5sum={md5sum}")
             rows.append({dmdbdefs.DB_COL_FILENAME:fname, dmdbdefs.DB_COL_COMPRESSION:comp,
                          dmdbdefs.DB_COL_FILESIZE:filesize, dmdbdefs.DB_COL_MD5SUM:md5sum})
 
@@ -327,7 +327,7 @@ class DesDmDbi(desdbi.DesDbi):
         for _file in filelist:
             fname = None
             comp = None
-            if isinstance(_file, basestring):
+            if isinstance(_file, str):
                 (fname, comp) = miscutils.parse_fullname(_file, miscutils.CU_PARSE_FILENAME | miscutils.CU_PARSE_EXTENSION)
             elif isinstance(_file, dict) and(dmdbdefs.DB_COL_FILENAME in _file or dmdbdefs.DB_COL_FILENAME.lower() in _file):
                 if dmdbdefs.DB_COL_COMPRESSION in _file:
@@ -341,7 +341,7 @@ class DesDmDbi(desdbi.DesDbi):
                 else:
                     (fname, comp) = miscutils.parse_fullname(_file[dmdbdefs.DB_COL_FILENAME.lower()], miscutils.CU_PARSE_FILENAME | miscutils.CU_PARSE_EXTENSION)
             else:
-                raise ValueError("Invalid entry filelist(%s)" % _file)
+                raise ValueError(f"Invalid entry filelist({_file})")
             rows.append({dmdbdefs.DB_COL_FILENAME:fname, dmdbdefs.DB_COL_COMPRESSION:comp})
         self.insert_many(dmdbdefs.DB_GTT_FILENAME, colmap, rows)
         return dmdbdefs.DB_GTT_FILENAME
@@ -366,7 +366,7 @@ class DesDmDbi(desdbi.DesDbi):
             if isinstance(desfid, int):
                 rows.append({dmdbdefs.DB_COL_ID: desfid})
             else:
-                raise ValueError("invalid entry idlist(%s)" % str(desfid))
+                raise ValueError(f"invalid entry idlist({str(desfid)})")
         self.insert_many(dmdbdefs.DB_GTT_ID, colmap, rows)
         return dmdbdefs.DB_GTT_ID
 
@@ -383,7 +383,7 @@ class DesDmDbi(desdbi.DesDbi):
         if 'gtt' not in tablename.lower():
             raise ValueError("Invalid table name for a global temp table(missing GTT)")
 
-        sql = "delete from %s" % tablename
+        sql = f"delete from {tablename}"
         curs = self.cursor()
         curs.execute(sql)
         curs.close()
@@ -519,7 +519,7 @@ class DesDmDbi(desdbi.DesDbi):
                 from OPS_DATAFILE_TABLE df, OPS_DATAFILE_METADATA md
                 where df.filetype = md.filetype and current_flag=1 and lower(df.filetype) = lower(""" + bindstr + """)
                 order by md.attribute_name, md.POSITION"""
-        result = OrderedDict()
+        result = collections.OrderedDict()
         curs = self.cursor()
         curs.execute(sql, {"afiletype": filetype})
 
@@ -527,9 +527,9 @@ class DesDmDbi(desdbi.DesDbi):
         for row in curs:
             if tablename is None:
                 tablename = row[TABLE]
-            if row[HDU] not in result.keys():
+            if row[HDU] not in result:
                 result[row[HDU]] = {}
-            if row[ATTRIBUTE] not in result[row[HDU]].keys():
+            if row[ATTRIBUTE] not in result[row[HDU]]:
                 result[row[HDU]][row[ATTRIBUTE]] = {}
                 result[row[HDU]][row[ATTRIBUTE]]['datatype'] = row[DATATYPE]
                 result[row[HDU]][row[ATTRIBUTE]]['format'] = row[FORMAT]
