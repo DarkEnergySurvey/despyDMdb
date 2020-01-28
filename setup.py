@@ -9,7 +9,7 @@ from distutils.core import setup
 
 # The main call
 setup(name='despyDMdb',
-      version ='0.1.4',
+      version ='3.0.0',
       license = "GPL",
       description = "common DESDM DB classes/functions",
       author = "Michelle Gower",
