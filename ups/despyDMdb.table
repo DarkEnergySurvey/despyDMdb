@@ -1,5 +1,6 @@
-setupRequired(despydb 2.0.6+0)
-setupRequired(despymisc 1.0.0+0)
+setupRequired(despydb)
+setupRequired(despymisc)
+setupRequired(cxOracle)
 
 envPrepend(PYTHONPATH, ${PRODUCT_DIR}/python)
 
