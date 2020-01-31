@@ -193,7 +193,7 @@ port    =   0
     def test_get_archive_transfer_info(self):
         dbh = dmdbi.DesDmDbi(self.sfile, 'db-test')
         data = dbh.get_archive_transfer_info()
-        self.assertEqual(len(data), 0)
+        self.assertEqual(len(data), 2)
 
     def test_get_job_file_mvmt_info(self):
         dbh = dmdbi.DesDmDbi(self.sfile, 'db-test')
@@ -213,7 +213,8 @@ port    =   0
                   dmdbdefs.DB_COL_FILESIZE.lower(): 112233,
                   dmdbdefs.DB_COL_MD5SUM.lower(): 'ab66249844'},
                  {'fullname': 'test3.fits.fz'},
-                 {dmdbdefs.DB_COL_FILENAME: 'test4.fts.fz'}]
+                 {dmdbdefs.DB_COL_FILENAME: 'test4.fts.fz'},
+                 {'filename': 'test4.fits'}]
         dbh = dmdbi.DesDmDbi(self.sfile, 'db-test')
         tab = dbh.load_artifact_gtt(files)
         curs = dbh.cursor()
