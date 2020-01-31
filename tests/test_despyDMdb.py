@@ -1,5 +1,5 @@
-#!/usr/bin/env python2
-# pylint: skip-file
+#!/usr/bin/env python3
+
 
 import unittest
 import os
@@ -8,7 +8,7 @@ import time
 import sys
 
 from contextlib import contextmanager
-from StringIO import StringIO
+from io import StringIO
 
 import despydmdb.dbsemaphore as semaphore
 import despydmdb.desdmdbi as dmdbi
@@ -30,7 +30,7 @@ def capture_output():
 class TestSemaphore(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        print 'SETUP'
+        print('SETUP')
         cls.sfile = 'services.ini'
         open(cls.sfile, 'w').write("""
 
@@ -59,7 +59,7 @@ server  =   Minimal_server
 type    =   test
 port    =   0
 """)
-        os.chmod(cls.sfile, (0xffff & ~(stat.S_IROTH | stat.S_IWOTH | stat.S_IRGRP | stat.S_IWGRP )))
+        os.chmod(cls.sfile, (0xffff & ~(stat.S_IROTH | stat.S_IWOTH | stat.S_IRGRP | stat.S_IWGRP)))
 
     @classmethod
     def tearDownClass(cls):
@@ -79,13 +79,13 @@ port    =   0
         self.assertIsNotNone(res[-1]['request_time'])
         self.assertIsNotNone(res[-1]['grant_time'])
         self.assertIsNone(res[-1]['release_time'])
-        id = res[-1]['id']
+        myid = res[-1]['id']
         cur.execute("select count(*) from semlock where name='%s' and in_use!=0" % semname)
         self.assertEqual(cur.fetchall()[0][0], 1)
         del sem
         cur.execute("select count(*) from semlock where name='%s' and in_use!=0" % semname)
         self.assertEqual(cur.fetchall()[0][0], 0)
-        res = dbh.query_simple('SEMINFO', ['ID', 'REQUEST_TIME', 'GRANT_TIME', 'RELEASE_TIME'], {'ID': id})
+        res = dbh.query_simple('SEMINFO', ['ID', 'REQUEST_TIME', 'GRANT_TIME', 'RELEASE_TIME'], {'ID': myid})
         self.assertIsNotNone(res[-1]['request_time'])
         self.assertIsNotNone(res[-1]['grant_time'])
         self.assertIsNotNone(res[-1]['release_time'])
@@ -118,7 +118,7 @@ port    =   0
     def test_str(self):
         with capture_output() as (out, err):
             sem = semaphore.DBSemaphore('mock-in', 123456, self.sfile, 'db-test')
-            print sem
+            print(sem)
             output = out.getvalue().strip()
             self.assertTrue('mock-in' in output)
             self.assertTrue('slot' in output)
@@ -155,7 +155,7 @@ server  =   Minimal_server
 type    =   test
 port    =   0
 """)
-        os.chmod(cls.sfile, (0xffff & ~(stat.S_IROTH | stat.S_IWOTH | stat.S_IRGRP | stat.S_IWGRP )))
+        os.chmod(cls.sfile, (0xffff & ~(stat.S_IROTH | stat.S_IWOTH | stat.S_IRGRP | stat.S_IWGRP)))
 
     @classmethod
     def tearDownClass(cls):
@@ -188,7 +188,7 @@ port    =   0
         dbh = dmdbi.DesDmDbi(self.sfile, 'db-test')
         data = dbh.get_archive_info()
         self.assertTrue('decarchive' in data)
-        self.assertTrue('endpoint' in data['decarchive'])
+        self.assertTrue('fileutils' in data['decarchive'])
 
     def test_get_archive_transfer_info(self):
         dbh = dmdbi.DesDmDbi(self.sfile, 'db-test')
