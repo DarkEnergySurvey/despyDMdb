@@ -4,6 +4,7 @@ branch = True
 [report]
 exclude_lines =
     pragma: no cover
+    miscutils.fwdebug_check
     def __repr__
     if self.debug:
     if settings.DEBUG
