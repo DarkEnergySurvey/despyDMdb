@@ -30,7 +30,6 @@ def capture_output():
 class TestSemaphore(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        print('SETUP')
         cls.sfile = 'services.ini'
         open(cls.sfile, 'w').write("""
 
@@ -64,7 +63,10 @@ port    =   0
     @classmethod
     def tearDownClass(cls):
         os.unlink(cls.sfile)
-        MockConnection.destroy()
+        try:
+            MockConnection.destroy()
+        except:
+            pass
 
     def test_basic_operation(self):
         dbh = desdbi.DesDbi(self.sfile, 'db-test')
@@ -102,11 +104,11 @@ port    =   0
         sem2 = semaphore.DBSemaphore('mock-in', 123456, self.sfile, 'db-test')
         self.assertTrue(time.time() - now < semaphore.TRYINTERVAL)
         now = time.time()
-        MockConnection.mock_fail = True
+        MockConnection.mock_fail(True)
         semfail = semaphore.DBSemaphore('mock-in', 123456, self.sfile, 'db-test')
         self.assertTrue(time.time() - now > semaphore.MAXTRIES * semaphore.TRYINTERVAL)
         self.assertTrue(time.time() - now < (semaphore.MAXTRIES + 1) * semaphore.TRYINTERVAL)
-        MockConnection.mock_fail = False
+        MockConnection.mock_fail(False)
         del sem1
         now = time.time()
         sem3 = semaphore.DBSemaphore('mock-in', 123456, self.sfile, 'db-test')
@@ -118,7 +120,6 @@ port    =   0
     def test_str(self):
         with capture_output() as (out, err):
             sem = semaphore.DBSemaphore('mock-in', 123456, self.sfile, 'db-test')
-            print(sem)
             output = out.getvalue().strip()
             self.assertTrue('mock-in' in output)
             self.assertTrue('slot' in output)
