@@ -120,6 +120,7 @@ port    =   0
     def test_str(self):
         with capture_output() as (out, err):
             sem = semaphore.DBSemaphore('mock-in', 123456, self.sfile, 'db-test')
+            print(sem)
             output = out.getvalue().strip()
             self.assertTrue('mock-in' in output)
             self.assertTrue('slot' in output)
