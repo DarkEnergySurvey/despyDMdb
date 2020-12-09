@@ -13,6 +13,7 @@ import socket
 import collections
 
 import despydb.desdbi as desdbi
+import despydb.desdbi_defs as dbdefs
 import despydmdb.dmdb_defs as dmdbdefs
 import despymisc.miscutils as miscutils
 
